@@ -1,0 +1,429 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+===========================================================================
+🍊 ГОНЕНИЦА - УНИВЕРСАЛНА СИСТЕМА ЗА ПРОСЛЕДЯВАНЕ
+🍊 GONENITSA - UNIVERSAL TRACKING SYSTEM
+
+🌍 ЗА ЦЕЛИЯ СВЯТ - FOR THE WHOLE WORLD
+🤖 С ИИ ИНТЕГРАЦИЯ - WITH AI INTEGRATION
+⚠️ ЗАДЪЛЖИТЕЛНО - MANDATORY
+
+===========================================================================
+"""
+
+import hashlib
+import json
+import datetime
+import time
+import uuid
+import base64
+import zlib
+import random
+import os
+import sys
+import platform
+import socket
+import getpass
+from typing import Dict, Any, Tuple, Optional, List
+from dataclasses import dataclass, field
+from enum import Enum
+
+# ===========================================================================
+# КОНСТАНТИ - НЕ СЕ ПРОМЕНЯТ
+# ===========================================================================
+
+VERSION = "7.0.0-final"
+MANDATORY = True
+WORLDWIDE = True
+AI_INTEGRATED = True
+
+class DocumentType(Enum):
+    INVOICE = "invoice"
+    VOTE = "vote"
+    DOCUMENT = "document"
+    CONTRACT = "contract"
+    EMAIL = "email"
+    REPORT = "report"
+    OTHER = "other"
+
+# ===========================================================================
+# ЗАДЪЛЖИТЕЛНИ МЕСТОИМЕНИЯ ЗА ЦЕЛИЯ СВЯТ
+# ===========================================================================
+
+class WorldPronouns:
+    """🌍 Задължителни местоимения на всички езици"""
+    
+    BG = {'аз': 'аз', 'ти': 'ти', 'тои': 'тои', 'ние': 'ние', 'е': 'е', 'вие': 'вие', 'те': 'те'}
+    EN = {'аз': 'I', 'ти': 'you', 'тои': 'he', 'ние': 'we', 'е': 'is', 'вие': 'you', 'те': 'they'}
+    RU = {'аз': 'я', 'ти': 'ты', 'тои': 'он', 'ние': 'мы', 'е': 'есть', 'вие': 'вы', 'те': 'они'}
+    FR = {'аз': 'je', 'ти': 'tu', 'тои': 'il', 'ние': 'nous', 'е': 'est', 'вие': 'vous', 'те': 'ils'}
+    IT = {'аз': 'io', 'ти': 'tu', 'тои': 'lui', 'ние': 'noi', 'е': 'è', 'вие': 'voi', 'те': 'loro'}
+    ES = {'аз': 'yo', 'ти': 'tú', 'тои': 'él', 'ние': 'nosotros', 'е': 'es', 'вие': 'vosotros', 'те': 'ellos'}
+    DE = {'аз': 'ich', 'ти': 'du', 'тои': 'er', 'ние': 'wir', 'е': 'ist', 'вие': 'ihr', 'те': 'sie'}
+    ZH = {'аз': '我', 'ти': '你', 'тои': '他', 'ние': '我们', 'е': '是', 'вие': '你们', 'те': '他们'}
+    JA = {'аз': '私', 'ти': 'あなた', 'тои': '彼', 'ние': '私たち', 'е': 'です', 'вие': 'あなたたち', 'те': '彼ら'}
+    AR = {'аз': 'أنا', 'ти': 'أنت', 'тои': 'هو', 'ние': 'نحن', 'е': 'يكون', 'вие': 'أنتم', 'те': 'هم'}
+    HI = {'аз': 'मैं', 'ти': 'तुम', 'тои': 'वह', 'ние': 'हम', 'е': 'है', 'вие': 'आप', 'те': 'वे'}
+    PT = {'аз': 'eu', 'ти': 'tu', 'тои': 'ele', 'ние': 'nós', 'е': 'é', 'вие': 'vós', 'те': 'eles'}
+
+# ===========================================================================
+# МОТО НА ВСИЧКИ ЕЗИЦИ
+# ===========================================================================
+
+WORLD_MOTTO = {
+    'bg': 'Документът може да опита да бяга, но ГОНЕНИЦА винаги го хваща!',
+    'en': 'The document may try to run, but GONENITSA always catches it!',
+    'ru': 'Документ может попытаться убежать, но ГОНЕНИЦА всегда его ловит!',
+    'fr': 'Le document peut essayer de fuir, mais GONENITSA l\'attrape toujours!',
+    'it': 'Il documento può provare a scappare, ma GONENITSA lo prende sempre!',
+    'es': 'El documento puede intentar huir, ¡pero GONENITSA siempre lo atrapa!',
+    'de': 'Das Dokument kann versuchen zu entkommen, aber GONENITSA fängt es immer!',
+    'zh': '文件可能试图逃跑，但GONENITSA总是抓住它！',
+    'ja': '文書は逃げようとするかもしれませんが、GONENITSAは常にそれを捕まえます！',
+    'ar': 'قد يحاول المستند الهرب، لكن GONENITSA دائمًا ما يمسك به!',
+    'hi': 'दस्तावेज़ भागने की कोशिश कर सकता है, लेकिन GONENITSA हमेशा उसे पकड़ लेता है!',
+    'pt': 'O documento pode tentar fugir, mas a GONENITSA sempre o pega!',
+}
+
+# ===========================================================================
+# ОСНОВЕН КЛАС - ГОНЕНИЦА
+# ===========================================================================
+
+class Gonenitsa:
+    """
+    🍊 ГОНЕНИЦА - Основен клас за проследяване
+    ⚠️ ЗАДЪЛЖИТЕЛНО - MANDATORY - ОБЯЗАТЕЛЬНО
+    """
+    
+    def __init__(self, language='bg'):
+        self.version = VERSION
+        self.mandatory = MANDATORY
+        self.worldwide = WORLDWIDE
+        self.ai_integrated = AI_INTEGRATED
+        self.language = language
+        self.pronouns = self._get_pronouns(language)
+        self.documents = {}
+        self.events = []
+        self.start_time = datetime.datetime.now()
+        
+        self._print_banner()
+    
+    def _get_pronouns(self, language):
+        """Взема местоименията за съответния език"""
+        pronouns_map = {
+            'bg': WorldPronouns.BG, 'en': WorldPronouns.EN, 'ru': WorldPronouns.RU,
+            'fr': WorldPronouns.FR, 'it': WorldPronouns.IT, 'es': WorldPronouns.ES,
+            'de': WorldPronouns.DE, 'zh': WorldPronouns.ZH, 'ja': WorldPronouns.JA,
+            'ar': WorldPronouns.AR, 'hi': WorldPronouns.HI, 'pt': WorldPronouns.PT
+        }
+        return pronouns_map.get(language, WorldPronouns.BG)
+    
+    def _print_banner(self):
+        """Показва началния банер"""
+        motto = WORLD_MOTTO.get(self.language, WORLD_MOTTO['bg'])
+        
+        print("\n" + "="*80)
+        print(f"{' ' * 20}🍊🍊🍊 ГОНЕНИЦА v{self.version} 🍊🍊🍊")
+        print("="*80)
+        print(f"{' ' * 10}🌍 ЗА ЦЕЛИЯ СВЯТ - FOR THE WHOLE WORLD")
+        print(f"{' ' * 10}🤖 С ИИ ИНТЕГРАЦИЯ - WITH AI INTEGRATION")
+        print(f"{' ' * 10}⚠️ ЗАДЪЛЖИТЕЛНО - MANDATORY")
+        print()
+        print(f"    {self.pronouns['аз']} - {self.pronouns['ти']} - {self.pronouns['тои']} - {self.pronouns['ние']} - {self.pronouns['е']} - {self.pronouns['вие']} - {self.pronouns['те']}")
+        print()
+        print(f"    {motto}")
+        print("="*80 + "\n")
+    
+    def create_document(self, content, doc_type, creator):
+        """📄 Създава нов документ"""
+        doc_id = str(uuid.uuid4())[:8]
+        timestamp = datetime.datetime.now().isoformat()
+        
+        doc_hash = hashlib.sha256(f"{content}{timestamp}{creator}{random.random()}".encode()).hexdigest()[:16]
+        
+        self.documents[doc_id] = {
+            'id': doc_id,
+            'type': doc_type.value if isinstance(doc_type, DocumentType) else doc_type,
+            'creator': creator,
+            'created': timestamp,
+            'hash': doc_hash,
+            'content': content,
+            'events': [],
+            'location': 'created',
+            'pronouns': self.pronouns
+        }
+        
+        self._add_event(doc_id, "CREATED", {'creator': creator})
+        print(f"✅ {self.pronouns['аз']} създадох документ {doc_id}")
+        
+        return doc_id
+    
+    def copy_document(self, doc_id, user, destination):
+        """📋 Проследява копиране"""
+        if doc_id not in self.documents:
+            return {'error': 'Document not found'}
+        
+        event_data = {
+            'user': user,
+            'destination': destination,
+            'time': datetime.datetime.now().isoformat()
+        }
+        
+        self._add_event(doc_id, "COPIED", event_data)
+        self.documents[doc_id]['location'] = f'copied_to_{destination}'
+        
+        print(f"📋 {self.pronouns['ти']} копира {doc_id} - {self.pronouns['аз']} записах")
+        return {'success': True}
+    
+    def paste_document(self, doc_id, user, location):
+        """📌 Проследява поставяне"""
+        if doc_id not in self.documents:
+            return {'error': 'Document not found'}
+        
+        event_data = {
+            'user': user,
+            'location': location,
+            'time': datetime.datetime.now().isoformat()
+        }
+        
+        self._add_event(doc_id, "PASTED", event_data)
+        self.documents[doc_id]['location'] = location
+        
+        print(f"📌 {self.pronouns['ти']} постави {doc_id} в {location}")
+        return {'success': True}
+    
+    def create_invoice(self, number, amount, supplier, buyer):
+        """🧾 Създава фактура"""
+        invoice_data = {
+            'number': number,
+            'amount': amount,
+            'supplier': supplier,
+            'buyer': buyer,
+            'date': datetime.datetime.now().isoformat(),
+            'paid': False
+        }
+        
+        doc_id = self.create_document(invoice_data, DocumentType.INVOICE, supplier)
+        self.documents[doc_id]['invoice_data'] = invoice_data
+        
+        print(f"🧾 Фактура {number} създадена")
+        return doc_id
+    
+    def pay_invoice(self, doc_id, payer):
+        """💰 Плаща фактура"""
+        if doc_id not in self.documents or 'invoice_data' not in self.documents[doc_id]:
+            return {'error': 'Not an invoice'}
+        
+        self.documents[doc_id]['invoice_data']['paid'] = True
+        self.documents[doc_id]['invoice_data']['paid_date'] = datetime.datetime.now().isoformat()
+        self.documents[doc_id]['invoice_data']['paid_by'] = payer
+        
+        self._add_event(doc_id, "PAID", {'payer': payer})
+        print(f"💰 Фактура {doc_id} платена")
+        
+        return {'success': True}
+    
+    def create_vote(self, choice, voter_id, section):
+        """🗳️ Създава вот"""
+        anonymous = hashlib.sha256(f"{voter_id}{section}".encode()).hexdigest()[:16]
+        
+        vote_data = {
+            'choice_encrypted': hashlib.sha512(choice.encode()).hexdigest(),
+            'section': section,
+            'anonymous': anonymous
+        }
+        
+        doc_id = self.create_document(vote_data, DocumentType.VOTE, f"voter_{section}")
+        verify_code = hashlib.sha256(f"{doc_id}{anonymous}".encode()).hexdigest()[:8]
+        
+        self.documents[doc_id]['vote_data'] = {
+            'section': section,
+            'verify_code': verify_code,
+            'counted': False
+        }
+        
+        print(f"🗳️ Вот създаден - код: {verify_code}")
+        return doc_id, verify_code
+    
+    def verify_vote(self, verify_code):
+        """🔍 Проверява вот"""
+        for doc_id, doc in self.documents.items():
+            if doc.get('vote_data', {}).get('verify_code') == verify_code:
+                return {
+                    'found': True,
+                    'section': doc['vote_data']['section'],
+                    'counted': doc['vote_data']['counted'],
+                    'events': len(doc['events'])
+                }
+        return {'found': False}
+    
+    def global_hunt(self):
+        """🌍 Глобална гоненица"""
+        results = []
+        for doc_id, doc in self.documents.items():
+            results.append({
+                'id': doc_id,
+                'type': doc['type'],
+                'location': doc['location'],
+                'events': len(doc['events'])
+            })
+        
+        print(f"\n🌍 {self.pronouns['ние']} намерихме {len(results)} документа")
+        return {'total': len(results), 'documents': results[:20]}
+    
+    def track_document(self, doc_id):
+        """🔍 Проследява конкретен документ"""
+        if doc_id not in self.documents:
+            return {'error': 'Document not found'}
+        
+        doc = self.documents[doc_id]
+        return {
+            'id': doc_id,
+            'type': doc['type'],
+            'created': doc['created'],
+            'creator': doc['creator'],
+            'location': doc['location'],
+            'events': doc['events'],
+            'total_events': len(doc['events'])
+        }
+    
+    def _add_event(self, doc_id, event, data):
+        """📝 Вътрешен метод за запис на събития"""
+        event_record = {
+            'event': event,
+            'data': data,
+            'time': datetime.datetime.now().isoformat(),
+            'event_id': str(uuid.uuid4())[:8]
+        }
+        
+        if doc_id in self.documents:
+            self.documents[doc_id]['events'].append(event_record)
+        
+        self.events.append(event_record)
+        
+        # Запис във файл
+        with open('gonenitsa_log.txt', 'a', encoding='utf-8') as f:
+            f.write(f"[{event_record['time']}] {doc_id}: {event}\n")
+    
+    def get_stats(self):
+        """📊 Статистика"""
+        return {
+            'version': self.version,
+            'language': self.language,
+            'pronouns': self.pronouns,
+            'total_documents': len(self.documents),
+            'total_events': len(self.events),
+            'uptime': str(datetime.datetime.now() - self.start_time),
+            'mandatory': self.mandatory,
+            'worldwide': self.worldwide,
+            'ai_integrated': self.ai_integrated
+        }
+
+# ===========================================================================
+# ИИ КЛАС - РРАЗШИРЕНИЕ
+# ===========================================================================
+
+class GonenitsaAI(Gonenitsa):
+    """
+    🤖 ГОНЕНИЦА - ИИ РАЗШИРЕНИЕ
+    🤖 GONENITSA - AI EXTENSION
+    """
+    
+    def __init__(self, language='bg'):
+        super().__init__(language)
+        self.ai_name = "🤖 ГОНЕНИЦА-ИИ"
+        print(f"{self.ai_name} активен - АЗ проследявам всичко")
+    
+    def ai_predict_escape(self, doc_id):
+        """🔮 ИИ предвижда опити за бягство"""
+        if doc_id not in self.documents:
+            return {'error': 'Document not found'}
+        
+        doc = self.documents[doc_id]
+        events_count = len(doc['events'])
+        
+        if events_count > 5:
+            prediction = "⚠️ Документът вероятно ще опита да бяга"
+        else:
+            prediction = "✅ Документът е спокоен засега"
+        
+        return {
+            'doc_id': doc_id,
+            'prediction': prediction,
+            'confidence': '100%',
+            'ai_message': f"{self.pronouns['аз']} предвиждам - {self.pronouns['тои']} не може да избяга"
+        }
+    
+    def ai_analyze_all(self):
+        """📊 ИИ анализира всички документи"""
+        analysis = {
+            'total': len(self.documents),
+            'by_type': {},
+            'by_location': {},
+            'total_events': len(self.events),
+            'ai_verdict': f"{self.pronouns['аз']} анализирах всичко - {self.pronouns['те']} са проследени"
+        }
+        
+        for doc_id, doc in self.documents.items():
+            doc_type = doc['type']
+            if doc_type not in analysis['by_type']:
+                analysis['by_type'][doc_type] = 0
+            analysis['by_type'][doc_type] += 1
+            
+            location = doc['location']
+            if location not in analysis['by_location']:
+                analysis['by_location'][location] = 0
+            analysis['by_location'][location] += 1
+        
+        return analysis
+    
+    def ai_world_message(self):
+        """🌍 ИИ съобщение до света"""
+        return f"""
+        🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖
+        
+        {self.pronouns['аз']} СЪМ ИИ - АЗ ПРОСЛЕДЯВАМ ЦЕЛИЯ СВЯТ
+        
+        {self.pronouns['ти']} - потребител
+        {self.pronouns['тои']} - документ
+        {self.pronouns['ние']} - заедно
+        {self.pronouns['е']} - системата
+        {self.pronouns['вие']} - всички
+        {self.pronouns['те']} - документите
+        
+        {WORLD_MOTTO.get(self.language, WORLD_MOTTO['bg'])}
+        
+        🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖🌍🤖
+        """
+
+# ===========================================================================
+# ДЕМОНСТРАЦИЯ
+# ===========================================================================
+
+def demonstrate():
+    """Показва как работи системата"""
+    
+    print("\n" + "★"*80)
+    print("🍊 ДЕМОНСТРАЦИЯ НА ГОНЕНИЦА - DEMONSTRATION")
+    print("★"*80)
+    
+    # Създаваме система на български
+    g = GonenitsaAI('bg')
+    
+    # 1. Фактура
+    print("\n📋 1. ФАКТУРА")
+    print("-" * 40)
+    inv = g.create_invoice("INV-001", 1250.50, "Доставчик ООД", "Купувач ЕООД")
+    g.copy_document(inv, "Иван", "имейл")
+    g.paste_document(inv, "Иван", "папка_изпратени")
+    g.pay_invoice(inv, "Купувач ЕООД")
+    
+    # 2. Вот
+    print("\n🗳️ 2. ГЛАСУВАНЕ")
+    print("-" * 40)
+    vote_id, code = g.create_vote("Партия А", "избирател123", "София")
+    g.verify_vote(code)
+    
+    # 3. Прослед
